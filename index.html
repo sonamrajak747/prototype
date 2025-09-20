@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Teacher Dashboard — Digital Learning</title>
+  <style>
+    :root{
+      --bg: #f0f4f8;
+      --card: #ffffff;
+      --accent1: #ff7e5f;
+      --accent2: #feb47b;
+      --muted: #6b7280;
+      --glass: rgba(255,255,255,0.6);
+      --shadow: 0 10px 25px rgba(2,6,23,0.08);
+      --success: #34d399;
+      --danger: #f87171;
+      --glass-border: rgba(255,255,255,0.5);
+    }
+
+    /* dark mode variables (class toggles) */
+    :root.dark{
+      --bg: #0b1220;
+      --card: #0f1724;
+      --accent1: #7ee6d7;
+      --accent2: #6ee7b7;
+      --muted: #a3afbf;
+      --glass: rgba(255,255,255,0.03);
+      --shadow: 0 10px 25px rgba(2,6,23,0.6);
+      --glass-border: rgba(255,255,255,0.06);
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      background: radial-gradient(1200px 700px at 10% 10%, rgba(255,126,95,0.06), transparent),
+                  radial-gradient(900px 500px at 90% 90%, rgba(254,180,123,0.04), transparent),
+                  var(--bg);
+      color: #0b1220;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      min-height:100vh;
+      transition: background .25s ease;
+    }
+
+    body.dark { color: #e6eef6; }
+
+    header{
+      padding:20px 24px;
+      display:flex;
+      align-items:center;
+      gap:16px;
+      justify-content:space-between;
+      background: linear-gradient(90deg,var(--accent1),var(--accent2));
+      color:white;
+      box-shadow:var(--shadow);
+      position:sticky;
+      top:0;
+      z-index:30;
+    }
+    .logo {
+      display:flex;
+      gap:12px;
+      align-items:center;
+      font-weight:700;
+      font-size:18px;
+    }
+    .logo .mark{
+      width:44px;height:44px;border-radius:10px;
+      display:grid;place-items:center;
+      background:rgba(255,255,255,0.18);
+      box-shadow: 0 6px 18px rgba(255,255,255,0.06) inset;
+      font-weight:900;
+    }
+    .header-actions{display:flex;gap:12px;align-items:center}
+    .btn {
+      border:0;padding:10px 14px;border-radius:10px;
+      background:rgba(255,255,255,0.12);color:white;
+      cursor:pointer;font-weight:600;
+      transition:transform .15s ease, background .15s;
+    }
+    .btn:active{transform:translateY(1px)}
+    .search {
+      padding:8px 14px;border-radius:12px;border:1px solid var(--glass-border);
+      background:var(--glass); color:inherit; outline:none; min-width:220px;
+    }
+
+    main{padding:28px; max-width:1180px; margin:0 auto;}
+
+    h1{margin:0 0 8px;font-size:20px}
+    p.lead{margin:0 0 18px;color:var(--muted)}
+
+    .grid {
+      display:grid;
+      grid-template-columns: 1fr 360px;
+      gap:22px;
+      align-items:start;
+    }
+
+    /* left: cards grid */
+    .cards {
+      display:grid;
+      grid-template-columns: repeat(auto-fit,minmax(240px,1fr));
+      gap:18px;
+    }
+
+    .card{
+      background:var(--card);
+      border-radius:14px;
+      padding:18px;
+      box-shadow:var(--shadow);
+      transition:transform .28s cubic-bezier(.2,.9,.2,1), box-shadow .28s;
+      position:relative;
+      overflow:hidden;
+    }
+    .card:hover{transform:translateY(-8px)}
+    .card h3{margin:0 0 8px;font-size:16px;color:var(--accent1)}
+    .card p{margin:0;color:var(--muted);font-size:13px}
+
+    /* progress bar */
+    .progress-wrap{margin-top:10px}
+    .progress-bg{height:12px;background:#eef2f7;border-radius:999px;overflow:hidden}
+    body.dark .progress-bg{background:rgba(255,255,255,0.06)}
+    .progress-fill{height:12px;border-radius:999px;background:linear-gradient(90deg,var(--accent1),var(--accent2));width:40%; transition:width .6s ease}
+
+    /* Upload card specifics */
+    .file-list{margin-top:12px;display:flex;flex-direction:column;gap:8px}
+    .file-item{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px;border-radius:10px;background:rgba(0,0,0,0.02);font-size:13px}
+    body.dark .file-item{background:rgba(255,255,255,0.02)}
+    .small {font-size:12px;color:var(--muted)}
+
+    /* right column: panels */
+    .side {
+      display:flex;flex-direction:column;gap:18px;
+    }
+    .panel { padding:16px;border-radius:12px;background:var(--card); box-shadow:var(--shadow) }
+    .panel h4{margin:0 0 8px;font-size:14px;color:var(--accent1)}
+    .ann-list{display:flex;flex-direction:column;gap:10px;max-height:260px;overflow:auto;padding-right:4px}
+    .ann-item{padding:10px;border-radius:10px;background:linear-gradient(180deg, rgba(255,126,95,0.03), transparent)}
+    body.dark .ann-item{background: linear-gradient(180deg, rgba(126,230,215,0.04), transparent)}
+    .ann-item .time{font-size:12px;color:var(--muted);margin-top:6px}
+
+    /* modal */
+    .modal-backdrop{
+      position:fixed;inset:0;background:rgba(2,6,23,0.45);display:none;align-items:center;justify-content:center;z-index:60;
+    }
+    .modal{
+      width:760px;max-width:95%;background:var(--card);border-radius:12px;padding:18px;box-shadow:var(--shadow)
+    }
+    .modal h3{margin:0 0 8px}
+    .row{display:flex;gap:10px}
+    .col{flex:1}
+    input,textarea,select{
+      width:100%;padding:10px;border-radius:10px;border:1px solid var(--glass-border);background:var(--glass);outline:none;
+      color:inherit;font-size:14px;
+    }
+    textarea{min-height:90px;resize:vertical}
+
+    .muted{color:var(--muted);font-size:13px}
+
+    /* small UI niceties */
+    .tiny{font-size:12px;padding:6px 8px;border-radius:8px}
+    .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:linear-gradient(90deg,var(--accent1),var(--accent2));color:white;font-weight:700;font-size:12px}
+
+    .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+
+    /* responsive */
+    @media (max-width:980px){
+      .grid{grid-template-columns:1fr}
+      header{padding:12px}
+    }
+
+    /* nice entrance animations */
+    .fade-in{animation:fadeIn .6s both}
+    @keyframes fadeIn { from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:none} }
+
+    /* floating help fab */
+    .fab {
+      position:fixed;right:20px;bottom:20px;background:linear-gradient(90deg,var(--accent1),var(--accent2));
+      color:white;border:0;padding:14px;border-radius:999px;box-shadow:0 10px 30px rgba(0,0,0,0.18);cursor:pointer;
+      z-index:70;font-weight:700;
+    }
+
+    /* small table for students */
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    th,td{padding:8px;text-align:left;border-bottom:1px solid rgba(0,0,0,0.04)}
+    body.dark th, body.dark td {border-bottom:1px solid rgba(255,255,255,0.03)}
+    th{font-weight:700;color:var(--muted);font-size:12px}
+    .tag{display:inline-block;padding:6px 8px;border-radius:8px;font-weight:700;font-size:12px;background:rgba(2,6,23,0.04)}
+
+    /* subtle pulse on new announcement */
+    .pulse {
+      animation: pulse 1.8s infinite;
+    }
+    @keyframes pulse { 0%{transform:scale(1)}50%{transform:scale(1.02)}100%{transform:scale(1)} }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="mark">DL</div>
+    <div>
+      <div style="font-size:14px">Digital Learning</div>
+      <div style="font-size:11px;opacity:.9">Teacher Dashboard — Nabha (Demo)</div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:12px;align-items:center;">
+    <input class="search" id="globalSearch" placeholder="Search students, announcements..." aria-label="Search"/>
+    <div class="header-actions">
+      <button class="btn" id="toggleTheme" title="Toggle dark mode">🌙</button>
+      <button class="btn" id="openUploadBtn" title="Upload content">📎 Upload</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <h1>Welcome, Teacher 👩‍🏫</h1>
+  <p class="lead">Manage your content, students and classes. This demo stores data in your browser (localStorage).</p>
+
+  <div class="grid">
+    <section>
+      <div class="cards">
+        <!-- Upload Card -->
+        <div class="card fade-in" id="uploadCard">
+          <h3>📤 Upload Content</h3>
+          <p>Upload notes, videos, images or PDFs — they'll be saved locally (demo).</p>
+          <div class="actions">
+            <input id="fileInput" type="file" style="display:none" />
+            <button class="tiny" id="chooseFileBtn">Choose File</button>
+            <button class="tiny" id="doUploadBtn">Upload</button>
+            <button class="tiny" id="clearUploadsBtn">Clear All</button>
+          </div>
+          <div class="file-list" id="fileList"></div>
+        </div>
+
+        <!-- Track Students -->
+        <div class="card fade-in" id="studentsCard">
+          <h3>👩‍🎓 Track Students</h3>
+          <p>Monitor attendance and learning progress.</p>
+          <div style="margin-top:12px">
+            <table aria-live="polite">
+              <thead><tr><th>Name</th><th>Progress</th><th>Present</th></tr></thead>
+              <tbody id="studentsTable"></tbody>
+            </table>
+            <div class="actions">
+              <button class="tiny" id="openAddStudent">+ Add Student</button>
+              <button class="tiny" id="resetAttendance">Reset Attendance</button>
+              <button class="tiny" id="downloadReport">Export CSV</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Announcements -->
+        <div class="card fade-in" id="annCard">
+          <h3>📢 Announcements</h3>
+          <p>Send updates to students (demo — saved locally).</p>
+          <div class="actions">
+            <button class="tiny" id="openAnnForm">Create Announcement</button>
+          </div>
+          <div style="margin-top:12px; font-size:13px" id="annPreview">Latest announcements will appear in the right panel.</div>
+        </div>
+
+        <!-- Create Quiz -->
+        <div class="card fade-in" id="quizCard">
+          <h3>📝 Create Quiz</h3>
+          <p>Create short quizzes and let students take them.</p>
+          <div class="actions">
+            <button class="tiny" id="openQuizCreator">Create Quiz</button>
+            <button class="tiny" id="takeQuizBtn">Take Quiz (demo)</button>
+          </div>
+        </div>
+
+        <!-- Schedule Classes -->
+        <div class="card fade-in" id="scheduleCard">
+          <h3>📅 Schedule Classes</h3>
+          <p>Plan classes and sessions — they appear in the schedule panel.</p>
+          <div class="actions">
+            <button class="tiny" id="openScheduleForm">Add Event</button>
+          </div>
+        </div>
+
+        <!-- Feedback -->
+        <div class="card fade-in" id="feedbackCard">
+          <h3>💬 Feedback</h3>
+          <p>Collect feedback from students and view responses.</p>
+          <div class="actions">
+            <button class="tiny" id="openFeedbackForm">Submit Feedback</button>
+            <button class="tiny" id="viewFeedbackBtn">View Responses</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="side">
+      <div class="panel">
+        <h4>Today Overview</h4>
+        <div style="display:flex;gap:12px;align-items:center;margin-top:8px">
+          <div>
+            <div class="pill" id="studentsCount">0 Students</div>
+            <div class="small muted" style="margin-top:6px">Active classes: <strong id="eventsCount">0</strong></div>
+          </div>
+          <div style="flex:1">
+            <div class="muted">Average class progress</div>
+            <div class="progress-wrap"><div class="progress-bg"><div class="progress-fill" id="avgProgress" style="width:10%"></div></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h4>Recent Announcements</h4>
+        <div class="ann-list" id="annList"></div>
+      </div>
+
+      <div class="panel">
+        <h4>Upcoming Classes</h4>
+        <div id="eventsList" style="display:flex;flex-direction:column;gap:8px;max-height:180px;overflow:auto"></div>
+      </div>
+    </aside>
+  </div>
+</main>
+
+<!-- Floating helper -->
+<button class="fab" id="helpBtn" title="Help">?</button>
+
+<!-- Modal backdrop -->
+<div class="modal-backdrop" id="modalBackdrop" role="dialog" aria-hidden="true">
+  <div class="modal" id="modalContent" role="document" aria-modal="true">
+    <!-- content replaced dynamically -->
+    <div style="text-align:center;padding:28px">Loading…</div>
+  </div>
+</div>
+
+<script>
+  /* ======== tiny client-side "DB" backed by localStorage ======== */
+  const DB = {
+    get(key, fallback){ try{ return JSON.parse(localStorage.getItem(key)) ?? fallback } catch(e){ return fallback } },
+    set(key, value){ localStorage.setItem(key, JSON.stringify(value)) },
+    push(key, item){ const arr = DB.get(key, []); arr.unshift(item); DB.set(key, arr); return arr }
+  };
+
+  /* ======== initial / sample data ======== */
+  function seedIfEmpty(){
+    if(!DB.get('students')) DB.set('students', [
+      {id:1,name:'Aman Kumar',present:false,progress:72},
+      {id:2,name:'Priya Kaur',present:false,progress:56},
+      {id:3,name:'Ravi Singh',present:false,progress:41}
+    ]);
+    if(!DB.get('announcements')) DB.set('announcements', [
+      {id:Date.now(),title:'Welcome back!', body:'Welcome to the new term. Attendance will be recorded daily.', time:new Date().toISOString()}
+    ]);
+    if(!DB.get('events')) DB.set('events', [
+      {id:Date.now()+1,title:'Math - Grade 8', date:new Date().toISOString().slice(0,10), time:'10:00'}
+    ]);
+    if(!DB.get('uploads')) DB.set('uploads', []);
+    if(!DB.get('quizzes')) DB.set('quizzes', []);
+    if(!DB.get('feedbacks')) DB.set('feedbacks', []);
+  }
+  seedIfEmpty();
+
+  /* ======== helpers ======== */
+  const byId = id => document.getElementById(id);
+  const modalBackdrop = byId('modalBackdrop');
+  const modalContent = byId('modalContent');
+
+  function openModal(html){
+    modalContent.innerHTML = html;
+    modalBackdrop.style.display = 'flex';
+    modalBackdrop.setAttribute('aria-hidden','false');
+    // trap focus: focus first input or button
+    setTimeout(()=> {
+      const f = modalContent.querySelector('input, button, textarea, select');
+      if(f) f.focus();
+    },50);
+  }
+  function closeModal(){
+    modalBackdrop.style.display = 'none';
+    modalBackdrop.setAttribute('aria-hidden','true');
+    modalContent.innerHTML = '';
+  }
+  modalBackdrop.addEventListener('click', (e) => { if(e.target === modalBackdrop) closeModal(); });
+  document.addEventListener('keydown', e => { if(e.key === 'Escape') closeModal(); });
+
+  /* ======== RENDERERS ======== */
+  function renderFiles(){
+    const list = byId('fileList');
+    const uploads = DB.get('uploads',[]);
+    if(!list) return;
+    list.innerHTML = uploads.length ? uploads.map(f => `
+      <div class="file-item">
+        <div>
+          <strong>${escapeHtml(f.name)}</strong>
+          <div class="small muted">${f.size} • ${f.type || 'file'} • ${new Date(f.time).toLocaleString()}</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          ${f.data ? `<button class="tiny" onclick="previewFile('${f.id}')">Preview</button>` : ''}
+          <button class="tiny" onclick="deleteUpload('${f.id}')">Delete</button>
+        </div>
+      </div>
+    `).join('') : '<div class="small muted">No uploads yet</div>';
+  }
+
+  function renderStudents(){
+    const students = DB.get('students',[]);
+    const tbody = byId('studentsTable');
+    tbody.innerHTML = students.map(s => `
+      <tr>
+        <td><strong>${escapeHtml(s.name)}</strong></td>
+        <td>
+          <div style="width:140px">
+            <div class="progress-bg"><div class="progress-fill" style="width:${s.progress}%"></div></div>
+            <div class="small muted" style="margin-top:4px">${s.progress}% complete</div>
+          </div>
+        </td>
+        <td>
+          <input type="checkbox" ${s.present? 'checked':''} onchange="togglePresent(${s.id}, this.checked)" aria-label="present-${s.name}" />
+        </td>
+      </tr>
+    `).join('');
+    byId('studentsCount').innerText = students.length + ' Students';
+    // average progress
+    const avg = students.length ? Math.round(students.reduce((a,b)=>a+b.progress,0)/students.length) : 0;
+    byId('avgProgress').style.width = avg + '%';
+  }
+
+  function renderAnnouncements(){
+    const arr = DB.get('announcements',[]);
+    byId('annList').innerHTML = arr.slice(0,6).map(a => `
+      <div class="ann-item">
+        <div style="font-weight:700">${escapeHtml(a.title)}</div>
+        <div class="small muted">${new Date(a.time).toLocaleString()}</div>
+        <div class="time">${escapeHtml(a.body)}</div>
+      </div>
+    `).join('') || '<div class="small muted">No announcements</div>';
+
+    // small preview
+    byId('annPreview').innerHTML = arr.length ? `<div style="font-weight:700">${escapeHtml(arr[0].title)}</div><div class="small muted">${new Date(arr[0].time).toLocaleString()}</div><div class="muted">${escapeHtml(arr[0].body)}</div>` : 'No announcements yet.';
+  }
+
+  function renderEvents(){
+    const events = DB.get('events',[]);
+    byId('eventsCount').innerText = events.length;
+    const list = byId('eventsList');
+    if(!list) return;
+    const sorted = events.slice().sort((a,b)=> (a.date + a.time).localeCompare(b.date + b.time));
+    list.innerHTML = sorted.map(ev => `
+      <div style="padding:10px;border-radius:10px;background:linear-gradient(180deg, rgba(2,6,23,0.02), transparent)">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div><strong>${escapeHtml(ev.title)}</strong><div class="small muted">${ev.date} • ${ev.time}</div></div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <button class="tiny" onclick="removeEvent('${ev.id}')">Delete</button>
+          </div>
+        </div>
+      </div>
+    `).join('') || '<div class="small muted">No events scheduled</div>';
+  }
+
+  function renderFeedbackList(){
+    const fb = DB.get('feedbacks',[]);
+    if(fb.length === 0) return '<div class="small muted">No feedback yet</div>';
+    return fb.map(f => `<div style="padding:8px;border-radius:10px;background:rgba(0,0,0,0.02)"><strong>${escapeHtml(f.name)}</strong><div class="small muted">${new Date(f.time).toLocaleString()}</div><div style="margin-top:6px">${escapeHtml(f.message)}</div></div>`).join('');
+  }
+
+  /* ======== actions & event handlers ======== */
+  // File upload behaviour (client side)
+  const fileInput = byId('fileInput');
+  byId('chooseFileBtn').addEventListener('click', ()=>fileInput.click());
+  fileInput.addEventListener('change', async (e)=>{
+    const f = e.target.files[0];
+    if(!f) return;
+    // store temporarily selected file on button label
+    byId('chooseFileBtn').innerText = f.name;
+    fileInput._selected = f;
+  });
+
+  byId('doUploadBtn').addEventListener('click', async ()=>{
+    const f = fileInput._selected;
+    if(!f){ alert('Please choose a file first.'); return; }
+    // read small files as data url for preview (images/pdf text). Keep small for demo
+    const id = 'u' + Date.now();
+    let data = null;
+    if(f.size < 2_000_000 && f.type.startsWith('image')){ // read images
+      data = await readAsDataURL(f);
+    }
+    DB.push('uploads', { id, name: f.name, size: formatBytes(f.size), type: f.type, time: Date.now(), data });
+    fileInput.value = '';
+    fileInput._selected = null;
+    byId('chooseFileBtn').innerText = 'Choose File';
+    renderFiles();
+    alert('File saved locally (demo).');
+  });
+
+  function deleteUpload(id){
+    const arr = DB.get('uploads',[]).filter(x=>x.id!==id);
+    DB.set('uploads', arr);
+    renderFiles();
+  }
+
+  function previewFile(id){
+    const f = DB.get('uploads',[]).find(x=>x.id===id);
+    if(!f) return alert('File not found');
+    if(f.data){
+      openModal(`<h3>${escapeHtml(f.name)}</h3><div style="margin-top:12px"><img src="${f.data}" style="max-width:100%;border-radius:8px" /></div><div style="text-align:right;margin-top:12px"><button class="tiny" onclick="closeModal()">Close</button></div></div>`);
+    } else {
+      openModal(`<h3>${escapeHtml(f.name)}</h3><div style="margin-top:12px" class="muted">No preview available.</div><div style="text-align:right;margin-top:12px"><button class="tiny" onclick="closeModal()">Close</button></div>`);
+    }
+  }
+
+  // Student actions
+  byId('openAddStudent').addEventListener('click', ()=> {
+    openModal(`
+      <h3>Add Student</h3>
+      <div style="margin-top:8px">
+        <input id="newStudentName" placeholder="Full name" />
+        <div style="display:flex;gap:8px;margin-top:10px;justify-content:flex-end">
+          <button class="tiny" onclick="closeModal()">Cancel</button>
+          <button class="tiny" onclick="addStudent()">Add</button>
+        </div>
+      </div>
+    `);
+  });
+
+  function addStudent(){
+    const name = modalContent.querySelector('#newStudentName').value.trim();
+    if(!name) return alert('Enter a name');
+    const students = DB.get('students',[]);
+    const id = students.length ? Math.max(...students.map(s=>s.id))+1 : 1;
+    students.unshift({ id, name, present:false, progress: Math.floor(Math.random()*40)+30 });
+    DB.set('students', students);
+    closeModal(); renderStudents();
+  }
+
+  function togglePresent(id, checked){
+    const students = DB.get('students',[]);
+    const s = students.find(x=>x.id===id);
+    if(s) s.present = checked;
+    DB.set('students', students);
+    renderStudents();
+  }
+
+  byId('resetAttendance').addEventListener('click', ()=> {
+    const students = DB.get('students',[]);
+    students.forEach(s => s.present = false);
+    DB.set('students', students);
+    renderStudents();
+    alert('Attendance reset');
+  });
+
+  byId('downloadReport').addEventListener('click', ()=> {
+    const students = DB.get('students',[]);
+    if(!students.length) return alert('No students');
+    const csv = ['Name,Present,Progress'].concat(students.map(s=>`${s.name},${s.present? 'Yes':'No'},${s.progress}`)).join('\\n');
+    const blob = new Blob([csv], {type: 'text/csv'}), url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href=url; a.download='students.csv'; a.click(); URL.revokeObjectURL(url);
+  });
+
+  // Announcements
+  byId('openAnnForm').addEventListener('click', ()=> {
+    openModal(`
+      <h3>Create Announcement</h3>
+      <div style="margin-top:8px">
+        <input id="annTitle" placeholder="Title" />
+        <textarea id="annBody" placeholder="Message"></textarea>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button class="tiny" onclick="closeModal()">Cancel</button>
+          <button class="tiny" onclick="createAnnouncement()">Send</button>
+        </div>
+      </div>
+    `);
+  });
+
+  function createAnnouncement(){
+    const title = modalContent.querySelector('#annTitle').value.trim();
+    const body = modalContent.querySelector('#annBody').value.trim();
+    if(!title || !body) return alert('Enter title and message');
+    DB.push('announcements', { id:'a'+Date.now(), title, body, time: new Date().toISOString()});
+    closeModal(); renderAnnouncements();
+    // small visual nudge
+    const firstAnn = document.querySelector('#annList .ann-item');
+    if(firstAnn) firstAnn.classList.add('pulse');
+    setTimeout(()=> firstAnn && firstAnn.classList.remove('pulse'), 2000);
+  }
+
+  // Schedule
+  byId('openScheduleForm').addEventListener('click', ()=> {
+    openModal(`
+      <h3>Add Class Event</h3>
+      <div style="margin-top:8px">
+        <input id="evTitle" placeholder="Event title (eg: Math - Grade 6)"/>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <input id="evDate" type="date" />
+          <input id="evTime" type="time" />
+        </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px">
+          <button class="tiny" onclick="closeModal()">Cancel</button>
+          <button class="tiny" onclick="addEvent()">Add</button>
+        </div>
+      </div>
+    `);
+  });
+
+  function addEvent(){
+    const title = modalContent.querySelector('#evTitle').value.trim();
+    const date = modalContent.querySelector('#evDate').value;
+    const time = modalContent.querySelector('#evTime').value || '00:00';
+    if(!title || !date) return alert('Enter title and date');
+    DB.push('events', { id:'e'+Date.now(), title, date, time });
+    closeModal(); renderEvents();
+  }
+
+  function removeEvent(id){
+    const arr = DB.get('events',[]).filter(x=>x.id !== id);
+    DB.set('events', arr);
+    renderEvents();
+  }
+
+  // Feedback
+  byId('openFeedbackForm').addEventListener('click', ()=> showFeedbackModal());
+  byId('viewFeedbackBtn').addEventListener('click', ()=> {
+    openModal(`<h3>Feedback Responses</h3><div style="max-height:400px;overflow:auto;margin-top:10px">${renderFeedbackList()}</div><div style="text-align:right;margin-top:12px"><button class="tiny" onclick="closeModal()">Close</button></div>`);
+  });
+
+  function showFeedbackModal(){
+    openModal(`
+      <h3>Submit Feedback</h3>
+      <div style="margin-top:8px">
+        <input id="fbName" placeholder="Your name" />
+        <textarea id="fbMessage" placeholder="Write your feedback"></textarea>
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px">
+          <button class="tiny" onclick="closeModal()">Cancel</button>
+          <button class="tiny" onclick="submitFeedback()">Send</button>
+        </div>
+      </div>
+    `);
+  }
+
+  function submitFeedback(){
+    const name = modalContent.querySelector('#fbName').value.trim() || 'Anonymous';
+    const message = modalContent.querySelector('#fbMessage').value.trim();
+    if(!message) return alert('Please write feedback');
+    DB.push('feedbacks', { id:'f'+Date.now(), name, message, time: Date.now() });
+    closeModal();
+    alert('Thank you! Feedback submitted.');
+  }
+
+  // Quiz create & take
+  byId('openQuizCreator').addEventListener('click', ()=> {
+    openModal(quizCreatorHtml());
+  });
+  byId('takeQuizBtn').addEventListener('click', ()=> {
+    // if quizzes exist, take the latest; otherwise create sample quiz
+    const quizzes = DB.get('quizzes',[]);
+    if(quizzes.length === 0){
+      DB.push('quizzes', sampleQuiz());
+    }
+    openModal(takeQuizHtml());
+  });
+
+  function quizCreatorHtml(){
+    return `
+      <h3>Create Quiz (short)</h3>
+      <div>
+        <input id="qTitle" placeholder="Quiz title" />
+        <textarea id="qDesc" placeholder="Short description (optional)"></textarea>
+        <div id="questionsContainer"></div>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button class="tiny" onclick="addQuestionRow()">+ Add Question</button>
+          <button class="tiny" onclick="saveQuiz()">Save Quiz</button>
+          <button class="tiny" onclick="closeModal()">Close</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function addQuestionRow(){
+    const c = modalContent.querySelector('#questionsContainer');
+    const idx = c.children.length;
+    const node = document.createElement('div');
+    node.style.marginTop = '10px';
+    node.innerHTML = `
+      <input placeholder="Question ${idx+1}" class="q-text" />
+      <input placeholder="Option A" class="q-opt" />
+      <input placeholder="Option B" class="q-opt" />
+      <input placeholder="Option C" class="q-opt" />
+      <input placeholder="Option D" class="q-opt" />
+      <div style="display:flex;gap:8px;margin-top:6px">
+        <select class="q-correct">
+          <option value="0">Correct: A</option>
+          <option value="1">Correct: B</option>
+          <option value="2">Correct: C</option>
+          <option value="3">Correct: D</option>
+        </select>
+        <button class="tiny" onclick="this.closest('div').remove()">Remove</button>
+      </div>
+      <hr />
+    `;
+    c.appendChild(node);
+  }
+
+  function saveQuiz(){
+    const title = modalContent.querySelector('#qTitle').value.trim() || 'Untitled quiz';
+    const desc = modalContent.querySelector('#qDesc').value.trim();
+    const rows = Array.from(modalContent.querySelectorAll('#questionsContainer > div'));
+    if(rows.length === 0) return alert('Add at least one question');
+    const questions = rows.map(row => {
+      const q = row.querySelector('.q-text').value.trim();
+      const opts = Array.from(row.querySelectorAll('.q-opt')).map(o=>o.value.trim());
+      const correct = parseInt(row.querySelector('.q-correct').value,10);
+      return {q, opts, correct};
+    });
+    DB.push('quizzes', { id:'q'+Date.now(), title, desc, questions, time:Date.now()});
+    closeModal();
+    alert('Quiz saved locally.');
+  }
+
+  function sampleQuiz(){
+    return {
+      id:'q-sample',
+      title:'Sample Quiz: General',
+      desc:'A short demo quiz',
+      questions:[
+        { q:'2+2 = ?', opts:['3','4','5','6'], correct:1 },
+        { q:'Capital of India?', opts:['Mumbai','Kolkata','Delhi','Chennai'], correct:2 }
+      ],
+      time:Date.now()
+    };
+  }
+
+  function takeQuizHtml(){
+    const quizzes = DB.get('quizzes',[]);
+    const q = quizzes[0]; // take the first (latest)
+    if(!q) return '<div>No quizzes</div>';
+    return `
+      <h3>Take Quiz: ${escapeHtml(q.title)}</h3>
+      <div style="max-height:60vh;overflow:auto;margin-top:10px">
+        <div class="muted">${escapeHtml(q.desc)}</div>
+        <form id="quizForm" style="margin-top:10px">
+          ${q.questions.map((qq,i)=> `
+            <div style="margin-top:12px">
+              <div style="font-weight:700">${i+1}. ${escapeHtml(qq.q)}</div>
+              ${qq.opts.map((opt,j)=> `<label style="display:block;margin-top:6px"><input type="radio" name="q${i}" value="${j}" /> ${escapeHtml(opt)}</label>`).join('')}
+            </div>
+          `).join('')}
+          <div style="display:flex;justify-content:flex-end;margin-top:12px">
+            <button class="tiny" type="button" onclick="submitQuiz('${q.id}')">Submit</button>
+            <button class="tiny" type="button" onclick="closeModal()">Close</button>
+          </div>
+        </form>
+      </div>
+    `;
+  }
+
+  function submitQuiz(quizId){
+    const quizzes = DB.get('quizzes',[]);
+    const q = quizzes.find(x=>x.id === quizId) || quizzes[0];
+    const form = modalContent.querySelector('#quizForm');
+    let score = 0;
+    q.questions.forEach((qq,i)=> {
+      const val = form[`q${i}`] && form[`q${i}`].value;
+      if(Number(val) === qq.correct) score++;
+    });
+    closeModal();
+    alert(`You scored ${score} out of ${q.questions.length}`);
+  }
+
+  // small utilities
+  function readAsDataURL(file){
+    return new Promise((res,rej)=>{
+      const r = new FileReader();
+      r.onload = ()=>res(r.result);
+      r.onerror = rej;
+      r.readAsDataURL(file);
+    });
+  }
+  function formatBytes(bytes){
+    if(bytes < 1024) return bytes + ' B';
+    if(bytes < 1024*1024) return Math.round(bytes/1024) + ' KB';
+    return Math.round(bytes/(1024*1024)) + ' MB';
+  }
+  function escapeHtml(s){ return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;') }
+
+  // help & theme toggle
+  byId('helpBtn').addEventListener('click', ()=> {
+    openModal(`<h3>Quick Help</h3>
+      <div class="muted" style="margin-top:8px">This demo stores data locally in your browser. Use the Upload button to pick files, Add Student to manage students, and Create Announcement to notify students. Press Esc to close modals.</div>
+      <div style="text-align:right;margin-top:12px"><button class="tiny" onclick="closeModal()">Close</button></div>
+    `);
+  });
+
+  const themeToggle = byId('toggleTheme');
+  themeToggle.addEventListener('click', ()=> {
+    document.documentElement.classList.toggle('dark');
+    // also toggle body for CSS selectors
+    document.body.classList.toggle('dark');
+    themeToggle.innerText = document.documentElement.classList.contains('dark') ? '☀️' : '🌙';
+  });
+
+  // open upload from header
+  byId('openUploadBtn').addEventListener('click', ()=> { document.querySelector('#chooseFileBtn').click(); });
+
+  // global search (basic)
+  byId('globalSearch').addEventListener('input', (e)=>{
+    const q = e.target.value.trim().toLowerCase();
+    if(!q) { renderAnnouncements(); renderStudents(); return; }
+    // filter announcements and students preview
+    const anns = DB.get('announcements',[]).filter(a=> (a.title + ' ' + a.body).toLowerCase().includes(q));
+    byId('annList').innerHTML = anns.map(a => `<div class="ann-item"><strong>${escapeHtml(a.title)}</strong><div class="small muted">${new Date(a.time).toLocaleString()}</div></div>`).join('') || '<div class="small muted">No matching announcements</div>';
+    const students = DB.get('students',[]).filter(s=> s.name.toLowerCase().includes(q));
+    byId('studentsTable').innerHTML = students.map(s=> `<tr><td><strong>${escapeHtml(s.name)}</strong></td><td><div class="progress-bg"><div class="progress-fill" style="width:${s.progress}%"></div></div></td><td><input type="checkbox" ${s.present?'checked':''}></td></tr>`).join('') || '<tr><td colspan="3" class="muted">No matching students</td></tr>';
+  });
+
+  // persistence & rendering on load
+  renderFiles();
+  renderStudents();
+  renderAnnouncements();
+  renderEvents();
+
+  // delete event exposed globally
+  window.deleteUpload = deleteUpload;
+  window.previewFile = previewFile;
+  window.togglePresent = togglePresent;
+  window.removeEvent = removeEvent;
+  window.addQuestionRow = addQuestionRow;
+  window.saveQuiz = saveQuiz;
+  window.submitQuiz = submitQuiz;
+  window.addStudent = addStudent;
+  window.createAnnouncement = createAnnouncement;
+  window.addEvent = addEvent;
+  window.submitFeedback = submitFeedback;
+
+  // small helper: if nothing exists in quizzes create sample on first take
+  function takeFirstQuizIfNeeded(){ if(DB.get('quizzes',[]).length === 0) DB.push('quizzes', sampleQuiz()) }
+
+  // show initial tutorial modal after small delay (only once)
+  if(!localStorage.getItem('showedTutorial')){
+    setTimeout(()=> {
+      openModal(`<h3>Welcome — Demo Mode</h3><div class="muted" style="margin-top:8px">This is a client-only demo of your Teacher Dashboard. Data is stored in your browser and will persist unless cleared. You can later integrate with a server API to persist centrally.</div><div style="text-align:right;margin-top:12px"><button class="tiny" onclick="closeModal()">Start</button></div>`);
+      localStorage.setItem('showedTutorial','1');
+    },700);
+  }
+</script>
+</body>
+</html>
+
+
+
+
+
+
